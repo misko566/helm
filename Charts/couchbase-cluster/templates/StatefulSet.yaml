@@ -1,0 +1,75 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: {{ include "couchbase-cluster.fullname" . }}
+spec:
+  serviceName: {{ include "couchbase-cluster.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "couchbase-cluster.fullname" . }}
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: {{ include "couchbase-cluster.fullname" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 8091
+        volumeMounts:
+        - name: couchbase-data
+          mountPath: /opt/couchbase/var
+        env:
+          - name: COUCHBASE_MASTER
+            value: {{ .Values.couchbase_master }}
+          - name: AUTO_REBALANCE
+            value: "false"
+          - name: ADMIN_USER
+            value: {{ .Values.admin_user }}
+          - name: ADMIN_PASSWORD
+            value: {{ .Values.admin_password }}
+          - name: SERVICE_FQDN
+            value: {{ .Values.service_fqdn }}
+          - name: MEMORY_QUOTA
+            value: "{{ .Values.memory_quota }}"
+          - name: INDEX_QUOTA
+            value: "{{ .Values.index_quota }}"
+          - name: FTEXT_QUOTA
+            value: "{{ .Values.ftext_quota }}"
+          - name: WAIT_FOR_SERVICE
+            value: "{{ .Values.wait_for_service }}"
+          - name: MY_POD_IP
+            valueFrom:
+             fieldRef:
+              fieldPath: status.podIP
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        #readinessProbe:
+        #  httpGet:
+        #    path: /ui/index.html
+        #    port: 8091
+        #  initialDelaySeconds: 120
+      imagePullSecrets:
+      - name: acr-aut
+      resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: couchbase-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: managed-premium
+      resources:
+        requests:
+          storage: 100Gi

@@ -1,0 +1,67 @@
+# Default values for couchbase-cluster.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+
+couchbase_master: "couchbase-cluster-a-0.couchbase-cluster-a.namespace1.svc.cluster.local"
+service_fqdn: "couchbase-cluster-a.namespace1.svc.cluster.local"
+
+admin_user: "admin"
+admin_password: "password"
+
+image:
+  repository: misko566/couchbase
+  tag: 5.0.1-k8s
+  pullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: "couchbase-cluster-a"
+
+
+memory_quota: 4096
+index_quota: 1536
+ftext_quota: 256
+wait_for_service: 60
+
+
+# service:
+#   type: ClusterIP
+#   port: 80
+
+spec: 
+  ports:
+    port: 8091
+  loadBalancerIP: 192.168.100.101
+
+
+resources:
+  requests:
+    memory: "10098Mi"
+    cpu: "4000m"
+#  limits:
+#    memory: "12144Mi"
+#    cpu: "8000m"
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  paths: []
+  
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+
+# optional when you want to run couchbase nodes
+# labeling nodes  - kubectl label nodes aks-agentpool-XXXX-X couchbasea=true
+nodeSelector: 
+  couchbasea: "true"
+
+tolerations: []
+
+affinity: {}
